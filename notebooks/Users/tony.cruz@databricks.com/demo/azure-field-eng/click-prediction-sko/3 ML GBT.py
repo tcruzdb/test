@@ -37,6 +37,7 @@ display(intColsCount)
 from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
 
 maxBins = 70
+# looks like all our features are categorical, regardless of string or int type
 categorical = map(lambda c: c[0], filter(lambda c: c[1] <= maxBins, strColsCount))
 categorical += map(lambda c: c[0], filter(lambda c: c[1] <= maxBins, intColsCount))
 categorical.remove('click')
