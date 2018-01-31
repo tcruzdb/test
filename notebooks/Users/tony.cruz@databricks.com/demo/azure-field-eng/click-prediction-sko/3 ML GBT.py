@@ -82,7 +82,7 @@ test.cache()
 
 from pyspark.ml.classification import GBTClassifier
 
-classifier = GBTClassifier(labelCol="label", featuresCol="features", maxBins=maxBins, maxDepth=10, maxIter=50)
+classifier = GBTClassifier(labelCol="label", featuresCol="features", maxBins=maxBins, maxDepth=10, maxIter=10)
 
 model = classifier.fit(train)
 
