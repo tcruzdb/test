@@ -419,6 +419,3 @@ scoredStream.writeStream \
 # MAGIC %sql select prediction, avg(AN9), min(AN9), max(AN9) from stream group by prediction
 
 # COMMAND ----------
-
-print(
-    "long line ................................................................................")
