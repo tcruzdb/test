@@ -21,9 +21,9 @@
 
 # COMMAND ----------
 
-from pyspark.sql.types import *
-from pyspark.sql.functions import *
 from pyspark.ml import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
 
 # COMMAND ----------
 
@@ -40,34 +40,40 @@ from pyspark.ml import *
 # COMMAND ----------
 
 schema = StructType([ \
-                     StructField("AN3", DoubleType(), False), \
-                     StructField("AN4", DoubleType(), False), \
-                     StructField("AN5", DoubleType(), False), \
-                     StructField("AN6", DoubleType(), False), \
-                     StructField("AN7", DoubleType(), False), \
-                     StructField("AN8", DoubleType(), False), \
-                     StructField("AN9", DoubleType(), False), \
-                     StructField("AN10", DoubleType(), False) # , \
-                     # StructField("SPEED", DoubleType(), False) # , \ # speed format not consistent b/t classes
-                     # StructField("TORQUE", DoubleType(), False) \ # no torque data for healthy turbines
-                    ])
+    StructField("AN3", DoubleType(), False), \
+    StructField("AN4", DoubleType(), False), \
+    StructField("AN5", DoubleType(), False), \
+    StructField("AN6", DoubleType(), False), \
+    StructField("AN7", DoubleType(), False), \
+    StructField("AN8", DoubleType(), False), \
+    StructField("AN9", DoubleType(), False), \
+    StructField("AN10", DoubleType(), False)  # , \
+    # StructField("SPEED", DoubleType(), False) # , \ # speed format not consistent b/t classes
+    # StructField("TORQUE", DoubleType(), False) \ # no torque data for healthy turbines
+])
 schema
 
 # COMMAND ----------
 
-damagedSensorReadings = spark.read.schema(schema).csv("/windturbines/csv/D*gz").drop("TORQUE").drop("SPEED")
-healthySensorReadings = spark.read.schema(schema).csv("/windturbines/csv/H*gz").drop("TORQUE").drop("SPEED")
+damagedSensorReadings = spark.read.schema(schema).csv(
+    "/windturbines/csv/D*gz").drop("TORQUE").drop("SPEED")
+healthySensorReadings = spark.read.schema(schema).csv(
+    "/windturbines/csv/H*gz").drop("TORQUE").drop("SPEED")
 
 # COMMAND ----------
 
-print damagedSensorReadings.count()
-print healthySensorReadings.count()
+print
+damagedSensorReadings.count()
+print
+healthySensorReadings.count()
 
 # COMMAND ----------
 
 # run once
-healthySensorReadings.repartition(4).write.mode("overwrite").parquet("/windturbines/healthy/parquet")
-damagedSensorReadings.repartition(4).write.mode("overwrite").parquet("/windturbines/damaged/parquet")
+healthySensorReadings.repartition(4).write.mode("overwrite").parquet(
+    "/windturbines/healthy/parquet")
+damagedSensorReadings.repartition(4).write.mode("overwrite").parquet(
+    "/windturbines/damaged/parquet")
 
 # COMMAND ----------
 
@@ -128,8 +134,10 @@ turbine_healthy = table("tcruz.turbine_healthy")
 
 # COMMAND ----------
 
-print turbine_healthy.count()
-print turbine_damaged.count()
+print
+turbine_healthy.count()
+print
+turbine_damaged.count()
 
 # COMMAND ----------
 
@@ -141,8 +149,11 @@ display(turbine_damaged.describe())
 
 # COMMAND ----------
 
-randomSample = turbine_healthy.withColumn("ReadingType", lit("HEALTHY")).sample(False, 500/24000000.0)\
-               .union(turbine_damaged.withColumn("ReadingType", lit("DAMAGED")).sample(False, 500/24000000.0)).cache()
+randomSample = turbine_healthy.withColumn("ReadingType", lit("HEALTHY")).sample(
+    False, 500 / 24000000.0) \
+    .union(
+    turbine_damaged.withColumn("ReadingType", lit("DAMAGED")).sample(False,
+                                                                     500 / 24000000.0)).cache()
 
 # COMMAND ----------
 
@@ -175,8 +186,8 @@ display(randomSample)
 
 # COMMAND ----------
 
-df = turbine_healthy.withColumn("ReadingType", lit("HEALTHY"))\
-     .union(turbine_damaged.withColumn("ReadingType", lit("DAMAGED")))
+df = turbine_healthy.withColumn("ReadingType", lit("HEALTHY")) \
+    .union(turbine_damaged.withColumn("ReadingType", lit("DAMAGED")))
 
 # COMMAND ----------
 
@@ -194,9 +205,10 @@ from pyspark.ml import Pipeline
 featureCols = ["AN3", "AN4", "AN5", "AN6", "AN7", "AN8", "AN9", "AN10"]
 va = VectorAssembler(inputCols=featureCols, outputCol="va")
 stages = [va, \
-          StandardScaler(inputCol = "va", outputCol = "features", withStd = True, withMean = True), \
+          StandardScaler(inputCol="va", outputCol="features", withStd=True,
+                         withMean=True), \
           StringIndexer(inputCol="ReadingType", outputCol="label")]
-pipeline = Pipeline(stages = stages)
+pipeline = Pipeline(stages=stages)
 
 # COMMAND ----------
 
@@ -209,12 +221,15 @@ display(featurizedDf)
 
 # COMMAND ----------
 
-train, test = featurizedDf.select(["label", "features"]).randomSplit([0.7, 0.3], 42)
+train, test = featurizedDf.select(["label", "features"]).randomSplit([0.7, 0.3],
+                                                                     42)
 train = train.repartition(32)
 train.cache()
 test.cache()
-print train.count()
-print train.rdd.getNumPartitions()
+print
+train.count()
+print
+train.rdd.getNumPartitions()
 
 # COMMAND ----------
 
@@ -226,7 +241,7 @@ rf = RandomForestClassifier(labelCol="label", featuresCol="features", seed=42)
 
 # grid
 grid = ParamGridBuilder().addGrid(
-  rf.maxDepth, [4, 5, 6]
+    rf.maxDepth, [4, 5, 6]
 ).build()
 
 # evaluator
@@ -271,15 +286,20 @@ cvModel.bestModel
 
 # COMMAND ----------
 
-print ev.evaluate(predictions)
+print
+ev.evaluate(predictions)
 
 # COMMAND ----------
 
 bestModel = cvModel.bestModel
-print bestModel
-print '\n' + str(bestModel.getNumTrees)
-print '\n' + bestModel.explainParams()
-print '\n' + bestModel.toDebugString
+print
+bestModel
+print
+'\n' + str(bestModel.getNumTrees)
+print
+'\n' + bestModel.explainParams()
+print
+'\n' + bestModel.toDebugString
 
 # COMMAND ----------
 
@@ -290,12 +310,13 @@ cvModel.bestModel.featureImportances
 # convert numpy.float64 to str for spark.createDataFrame()
 weights = map(lambda w: '%.10f' % w, bestModel.featureImportances)
 weightedFeatures = spark.createDataFrame(
-  sorted(zip(weights, featureCols), key=lambda x: x[1], reverse=True)
+    sorted(zip(weights, featureCols), key=lambda x: x[1], reverse=True)
 ).toDF("weight", "feature")
 
 # COMMAND ----------
 
-display(weightedFeatures.select("feature", "weight").orderBy("weight", ascending=0))
+display(
+    weightedFeatures.select("feature", "weight").orderBy("weight", ascending=0))
 
 # COMMAND ----------
 
@@ -331,7 +352,7 @@ train.cache()
 
 # COMMAND ----------
 
-cv = CrossValidator(estimator=Pipeline(stages = stages), \
+cv = CrossValidator(estimator=Pipeline(stages=stages), \
                     estimatorParamMaps=grid, \
                     evaluator=BinaryClassificationEvaluator(), \
                     numFolds=3)
@@ -368,11 +389,11 @@ model = PipelineModel.load("/mnt/tcruz/windTurbine/model/")
 
 # COMMAND ----------
 
-inputStream = spark\
-  .readStream\
-  .schema(schema)\
-  .option("maxFilesPerTrigger", 1)\
-  .json("/mnt/tcruz/windTurbine/streaming-json/")
+inputStream = spark \
+    .readStream \
+    .schema(schema) \
+    .option("maxFilesPerTrigger", 1) \
+    .json("/mnt/tcruz/windTurbine/streaming-json/")
 
 # COMMAND ----------
 
@@ -380,10 +401,10 @@ scoredStream = model.transform(inputStream)
 
 # COMMAND ----------
 
-scoredStream.writeStream\
-  .format("memory")\
-  .queryName("stream")\
-  .start()
+scoredStream.writeStream \
+    .format("memory") \
+    .queryName("stream") \
+    .start()
 
 # COMMAND ----------
 
@@ -399,3 +420,5 @@ scoredStream.writeStream\
 
 # COMMAND ----------
 
+print(
+    "long line ................................................................................")
